@@ -17,7 +17,7 @@ sequenceDiagram
     Note over Phone,Server: Initial Authentication
     Phone->>Server: Connect via WebSockets (/ws/control)
     Server-->>Phone: Request Security PIN
-    Phone->>Server: Send PIN ("1406")
+    Phone->>Server: Send PIN
     Server-->>Phone: Auth Success (Sync Wi-Fi / Bluetooth status)
 
     Note over Phone,Server: Real-time Telemetry
@@ -44,7 +44,7 @@ sequenceDiagram
 - **Low Latency:** Optimized to process mouse movement events over WebSockets in under 30-50ms.
 
 ### 2. Apple Music Glassmorphism UI
-- **tactile Aesthetics:** Semantic light/dark modes with automatic `localStorage` persistence.
+- **Tactile Aesthetics:** Semantic light/dark modes with automatic `localStorage` persistence.
 - **Saturating Backdrop Blurs:** Cards and panels utilize `backdrop-filter: blur(20px) saturate(190%)` over smooth, pulsing ambient red & grey background gradients.
 - **Fluid Layouts:** Uses custom CSS grid alignments (`repeat(12, 1fr)`) that adapt smoothly from widescreen desktop monitors to touch-friendly mobile screens.
 
@@ -56,7 +56,7 @@ sequenceDiagram
 - **Rotational Secure PIN:** Sessions require a 4-digit security PIN generated dynamically on server startup. The PIN rotates instantly when clients disconnect or refresh, preventing unauthorized hijacking.
 - **30s Countdown Shutdown Guard:** Initiating a shutdown command displays a synchronous warning overlay with options to reset the timer (adds 30s) or abort the shutdown safely.
 
-### 5. Automated connection QR Code
+### 5. Automated Connection QR Code
 - Generates a local connection QR Code upon startup, allowing mobile devices on the same Wi-Fi network to scan and connect instantly.
 
 ---
@@ -95,10 +95,10 @@ zeomos-remote-control/
 ### Fast Startup (One-Click)
 1. Clone this repository to your computer:
    ```bash
-   git clone https://github.com/yourusername/zeomos-remote-control.git
+   git clone https://github.com/zeom1/zeomos-remote-control.git
    cd zeomos-remote-control
    ```
-2. Simply double-click the **`run.bat`** file. 
+2. Simply double-click the **`run.bat`** file.
    - *This will automatically set up a local virtual environment (`venv`), install all required Python modules from `requirements.txt`, generate a fresh secure PIN, and launch the server.*
 
 3. Ensure your laptop and smartphone are on the **same Wi-Fi network**.
