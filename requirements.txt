@@ -1,0 +1,7 @@
+fastapi>=0.100.0
+uvicorn>=0.22.0
+websockets>=11.0
+pyautogui>=0.9.54
+pillow>=10.0.0
+psutil>=5.9.0
+qrcode>=7.4.2

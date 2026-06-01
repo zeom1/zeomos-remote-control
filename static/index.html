@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZeomOS Companion Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body class="dark-mode"> <!-- Default theme is Dark Mode -->
+    <!-- Ambient glow backdrops (extremely subtle in premium design) -->
+    <div class="ambient-glow"></div>
+
+    <!-- Security PIN Verification Overlay -->
+    <div id="auth-overlay" class="overlay">
+        <div class="auth-card card animate-fade-in">
+            <div class="auth-logo">
+                <i class="fa-solid fa-chart-line logo-icon"></i>
+                <h2>ZeomOS</h2>
+            </div>
+            <p class="auth-desc">Enter the 4-digit PIN displayed on your laptop to establish a secure encrypted session.</p>
+            
+            <div class="pin-input-group">
+                <input type="password" id="pin-1" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric" autofocus>
+                <input type="password" id="pin-2" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                <input type="password" id="pin-3" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                <input type="password" id="pin-4" class="pin-digit" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+            </div>
+            
+            <button id="btn-connect" class="btn btn-primary btn-block">
+                <span>Authenticate</span>
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            </button>
+            <div id="auth-error" class="error-toast">Invalid security code. Please try again.</div>
+        </div>
+    </div>
+
+    <!-- Hardware Notification Alert Toast -->
+    <div id="hw-alert" class="hw-alert-toast hidden">
+        <div class="hw-alert-content">
+            <i class="fa-solid fa-circle-exclamation error-icon"></i>
+            <span id="hw-alert-msg">Permission Denied: Run server.py as Administrator.</span>
+        </div>
+        <button id="hw-alert-close" class="close-alert-btn"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- 30-Second Shutdown Countdown Overlay -->
+    <div id="shutdown-overlay" class="overlay hidden">
+        <div class="timer-card card animate-scale-in">
+            <div class="timer-icon pulse-red">
+                <i class="fa-solid fa-power-off"></i>
+            </div>
+            <h2>System Shutdown Warning</h2>
+            <p>Your laptop is shutting down in</p>
+            <div class="timer-countdown">
+                <span id="countdown-val">30</span>
+                <span class="timer-unit">seconds</span>
+            </div>
+            <div class="timer-actions">
+                <button id="btn-restart-timer" class="btn btn-secondary">
+                    <i class="fa-solid fa-rotate-left"></i> Restart Timer
+                </button>
+                <button id="btn-abort-shutdown" class="btn btn-danger">
+                    <i class="fa-solid fa-ban"></i> Abort Shutdown
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace Container -->
+    <div id="app-container" class="hidden">
+        
+        <!-- SIDEBAR (Desktop Side Navigation & HW Controls) -->
+        <aside class="sidebar card">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <i class="fa-solid fa-chart-line logo-icon"></i>
+                    <div>
+                        <h1>ZeomOS</h1>
+                        <span class="version-tag">v2.0 Z-OS</span>
+                    </div>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button id="btn-theme-toggle" class="theme-toggle-btn" title="Toggle Theme Preference">
+                    <i class="fa-solid fa-sun light-icon"></i>
+                    <i class="fa-solid fa-moon dark-icon"></i>
+                </button>
+            </div>
+
+            <!-- Connection Status -->
+            <div class="sidebar-conn-status">
+                <div class="status-indicator offline" id="conn-status">
+                    <span class="pulse-dot"></span>
+                    <span class="status-label">DISCONNECTED</span>
+                </div>
+                <div id="device-name" class="device-tag">LAPTOP</div>
+            </div>
+
+            <!-- Sidebar Navigation Tabs -->
+            <nav class="sidebar-nav">
+                <button class="nav-tab active" data-tab="control-tab">
+                    <i class="fa-solid fa-gamepad"></i>
+                    <span>Control Center</span>
+                </button>
+                <button class="nav-tab" data-tab="screen-tab">
+                    <i class="fa-solid fa-desktop"></i>
+                    <span>Live Screencast</span>
+                </button>
+                <button class="nav-tab" data-tab="media-tab">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Media & Launchers</span>
+                </button>
+                <button class="nav-tab" data-tab="stats-tab">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>PC Telemetry</span>
+                </button>
+            </nav>
+
+            <!-- Hardware Control Center Panel -->
+            <div class="hw-control-panel">
+                <h3>Hardware Controls</h3>
+                
+                <!-- Wi-Fi Toggle Item -->
+                <div class="hw-switch-item">
+                    <div class="hw-switch-info">
+                        <i class="fa-solid fa-wifi hw-icon" id="wifi-icon"></i>
+                        <div>
+                            <span class="hw-label">Wi-Fi Network</span>
+                            <span class="hw-status" id="wifi-status">Checking...</span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="wifi-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <div class="spinner-overlay hidden" id="wifi-spinner">
+                        <div class="mini-spinner"></div>
+                    </div>
+                </div>
+
+                <!-- Bluetooth Toggle Item -->
+                <div class="hw-switch-item">
+                    <div class="hw-switch-info">
+                        <i class="fa-solid fa-bluetooth hw-icon" id="bt-icon"></i>
+                        <div>
+                            <span class="hw-label">Bluetooth Radio</span>
+                            <span class="hw-status" id="bt-status">Checking...</span>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="bt-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <div class="spinner-overlay hidden" id="bt-spinner">
+                        <div class="mini-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN MAIN PANEL -->
+        <div class="main-panel">
+            
+            <!-- Mobile Responsive Header -->
+            <header class="mobile-header card">
+                <div class="mobile-logo">
+                    <i class="fa-solid fa-chart-line logo-icon"></i>
+                    <h1>ZeomOS</h1>
+                </div>
+                <div class="mobile-header-actions">
+                    <button id="btn-theme-toggle-mobile" class="theme-toggle-btn">
+                        <i class="fa-solid fa-sun light-icon"></i>
+                        <i class="fa-solid fa-moon dark-icon"></i>
+                    </button>
+                    <div class="status-indicator offline" id="conn-status-mobile">
+                        <span class="pulse-dot"></span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TELEMETRY BAR (Always visible at the top of Desktop View) -->
+            <section class="telemetry-bar">
+                <!-- CPU telemetry card -->
+                <div class="telemetry-widget card">
+                    <div class="widget-header">
+                        <span class="widget-title"><i class="fa-solid fa-microchip"></i> CPU Usage</span>
+                        <span class="widget-percentage" id="tele-cpu-val">0%</span>
+                    </div>
+                    <div class="widget-progress">
+                        <div class="progress-bar cpu-bar" id="tele-cpu-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <!-- RAM telemetry card -->
+                <div class="telemetry-widget card">
+                    <div class="widget-header">
+                        <span class="widget-title"><i class="fa-solid fa-memory"></i> RAM Usage</span>
+                        <span class="widget-percentage" id="tele-ram-val">0%</span>
+                    </div>
+                    <div class="widget-progress">
+                        <div class="progress-bar ram-bar" id="tele-ram-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Disk telemetry card -->
+                <div class="telemetry-widget card">
+                    <div class="widget-header">
+                        <span class="widget-title"><i class="fa-solid fa-hard-drive"></i> Disk Space</span>
+                        <span class="widget-percentage" id="tele-disk-val">0%</span>
+                    </div>
+                    <div class="widget-progress">
+                        <div class="progress-bar disk-bar" id="tele-disk-progress" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Battery telemetry card -->
+                <div class="telemetry-widget card">
+                    <div class="widget-header">
+                        <span class="widget-title" id="tele-bat-label"><i class="fa-solid fa-battery-three-quarters"></i> Battery</span>
+                        <span class="widget-percentage" id="tele-bat-val">100%</span>
+                    </div>
+                    <div class="widget-progress">
+                        <div class="progress-bar bat-bar" id="tele-bat-progress" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MAIN RESPONSIVE GRID CONTENT -->
+            <main class="grid-content">
+                
+                <!-- CONTROLS CONTAINER -->
+                <div id="control-tab" class="grid-card-wrapper active">
+                    <!-- Dynamic Trackpad Section -->
+                    <div class="trackpad-card card">
+                        <div class="card-title">
+                            <h3><i class="fa-solid fa-hand-pointer"></i> Precise Mouse Trackpad</h3>
+                        </div>
+                        <div id="trackpad" class="trackpad-area">
+                            <div class="trackpad-hint">
+                                <i class="fa-solid fa-fingerprint fingerprint-icon"></i>
+                                <p>Interactive Touch Surface</p>
+                                <span>Swipe to move cursor | Tap for Left Click | Double-tap for Double Click | Two-finger swipe to scroll pages</span>
+                            </div>
+                            <div id="trackpad-cursor" class="cursor-feedback"></div>
+                        </div>
+                        <div class="click-buttons">
+                            <button id="btn-left-click" class="btn btn-secondary click-btn">Left Click</button>
+                            <button id="btn-right-click" class="btn btn-secondary click-btn">Right Click</button>
+                        </div>
+                    </div>
+
+                    <!-- Keyboard & Special Keys Card -->
+                    <div class="keyboard-card card">
+                        <div class="card-title">
+                            <h3><i class="fa-solid fa-keyboard"></i> Keyboard & Command Dispatch</h3>
+                        </div>
+                        <div class="text-sender">
+                            <input type="text" id="text-input" placeholder="Type letters or sentences to send..." class="form-input">
+                            <button id="btn-send-text" class="btn btn-primary">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="special-keys-grid">
+                            <button class="key-btn" data-key="backspace"><i class="fa-solid fa-delete-left"></i> Back</button>
+                            <button class="key-btn" data-key="enter"><i class="fa-solid fa-turn-down fa-rotate-90"></i> Enter</button>
+                            <button class="key-btn" data-key="space">Space</button>
+                            <button class="key-btn" data-key="escape">Esc</button>
+                            <button class="key-btn" data-key="tab">Tab</button>
+                            <button class="key-btn" data-key="win"><i class="fa-brands fa-windows"></i> Win</button>
+                        </div>
+                        <div class="directional-arrows">
+                            <div class="arrow-row">
+                                <button class="key-btn arrow-btn" data-key="up"><i class="fa-solid fa-caret-up"></i></button>
+                            </div>
+                            <div class="arrow-row">
+                                <button class="key-btn arrow-btn" data-key="left"><i class="fa-solid fa-caret-left"></i></button>
+                                <button class="key-btn arrow-btn" data-key="down"><i class="fa-solid fa-caret-down"></i></button>
+                                <button class="key-btn arrow-btn" data-key="right"><i class="fa-solid fa-caret-right"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIVE SCREENCAST CONTAINER -->
+                <div id="screen-tab" class="grid-card-wrapper">
+                    <div class="screencast-card card">
+                        <div class="screencast-header">
+                            <h3><i class="fa-solid fa-display"></i> Real-time Desktop Screencast</h3>
+                            <button id="btn-toggle-cast" class="btn btn-primary">
+                                <i class="fa-solid fa-play"></i> <span>Start Stream</span>
+                            </button>
+                        </div>
+                        
+                        <div class="screencast-settings">
+                            <div class="setting-item">
+                                <span class="setting-label"><i class="fa-solid fa-compress"></i> Resolution Scale: <span id="scale-value">50%</span></span>
+                                <input type="range" id="cast-scale" min="0.2" max="1.0" step="0.1" value="0.5" class="range-slider">
+                            </div>
+                            <div class="setting-item">
+                                <span class="setting-label"><i class="fa-solid fa-images"></i> Compression Quality: <span id="quality-value">50%</span></span>
+                                <input type="range" id="cast-quality" min="10" max="90" step="10" value="50" class="range-slider">
+                            </div>
+                        </div>
+
+                        <div class="screen-canvas-wrapper">
+                            <canvas id="screen-canvas"></canvas>
+                            <div id="screen-loader" class="canvas-overlay hidden">
+                                <div class="spinner"></div>
+                                <p>Establishing screen capture pipe...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MEDIA & APP LAUNCHERS CONTAINER -->
+                <div id="media-tab" class="grid-card-wrapper">
+                    <!-- Native Volume & Playback Card -->
+                    <div class="media-card card">
+                        <div class="card-title">
+                            <h3><i class="fa-solid fa-circle-play"></i> Desktop Media Deck</h3>
+                        </div>
+                        <div class="volume-panel">
+                            <button id="vol-down" class="vol-circle-btn" title="Volume Down"><i class="fa-solid fa-volume-low"></i></button>
+                            <div class="volume-display">
+                                <i class="fa-solid fa-volume-high vol-main-icon"></i>
+                                <span>Master Volume</span>
+                            </div>
+                            <button id="vol-up" class="vol-circle-btn" title="Volume Up"><i class="fa-solid fa-volume-high"></i></button>
+                        </div>
+                        
+                        <button id="vol-mute" class="btn btn-secondary btn-block"><i class="fa-solid fa-volume-xmark"></i> Toggle Audio Mute</button>
+                        
+                        <div class="playback-controls">
+                            <button class="playback-btn" id="media-prev"><i class="fa-solid fa-backward-step"></i></button>
+                            <button class="playback-btn play-active" id="media-play"><i class="fa-solid fa-play"></i></button>
+                            <button class="playback-btn" id="media-next"><i class="fa-solid fa-forward-step"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Clean Quick App Launcher Card -->
+                    <div class="launcher-card card">
+                        <div class="card-title">
+                            <h3><i class="fa-solid fa-arrow-up-right-from-square"></i> App Launcher</h3>
+                        </div>
+                        <div class="launcher-grid">
+                            <button class="launch-btn" data-app="operagx">
+                                <i class="fa-solid fa-compass launcher-icon app-operagx"></i>
+                                <span>Opera GX</span>
+                            </button>
+                            <button class="launch-btn" data-app="spotify">
+                                <i class="fa-brands fa-spotify launcher-icon app-spotify"></i>
+                                <span>Spotify</span>
+                            </button>
+                            <button class="launch-btn" data-app="explorer">
+                                <i class="fa-solid fa-folder-open launcher-icon app-explorer"></i>
+                                <span>Explorer</span>
+                            </button>
+                            <button class="launch-btn" data-app="settings">
+                                <i class="fa-solid fa-gear launcher-icon app-settings"></i>
+                                <span>Settings</span>
+                            </button>
+                            <button class="launch-btn" data-app="cmd">
+                                <i class="fa-solid fa-terminal launcher-icon app-terminal"></i>
+                                <span>CMD</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PC STATISTICS TELEMETRY DASHBOARD -->
+                <div id="stats-tab" class="grid-card-wrapper">
+                    <!-- System telemetry dashboard info -->
+                    <div class="active-window-card card">
+                        <span class="active-window-header">Focused Desktop Application</span>
+                        <div id="active-window-title" class="active-window-title">Desktop / System</div>
+                    </div>
+
+                    <!-- Modern Grid Telemetry Details -->
+                    <div class="telemetry-details-grid">
+                        <div class="detail-stat-card card">
+                            <i class="fa-solid fa-clock detail-icon"></i>
+                            <div class="detail-info">
+                                <span class="detail-label">System Uptime</span>
+                                <span class="detail-value" id="detail-uptime">0h 0m</span>
+                            </div>
+                        </div>
+
+                        <div class="detail-stat-card card">
+                            <i class="fa-solid fa-network-wired detail-icon"></i>
+                            <div class="detail-info">
+                                <span class="detail-label">Network Traffic</span>
+                                <span class="detail-value" id="detail-network">0 MB ↑ | 0 MB ↓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Redesigned Power Operations Card -->
+                    <div class="power-card card">
+                        <div class="card-title">
+                            <h3><i class="fa-solid fa-power-off text-danger"></i> Power & Systems Operations</h3>
+                        </div>
+                        <div class="power-buttons-grid">
+                            <button class="power-btn btn-lock" id="power-lock">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Lock Screen</span>
+                            </button>
+                            <button class="power-btn btn-sleep" id="power-sleep">
+                                <i class="fa-solid fa-moon"></i>
+                                <span>Sleep PC</span>
+                            </button>
+                            <button class="power-btn btn-shutdown" id="power-shutdown">
+                                <i class="fa-solid fa-power-off"></i>
+                                <span>Shutdown (30s)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Mobile Bottom Navigation Bar (Hidden on Desktop) -->
+        <footer class="mobile-nav card">
+            <button class="mobile-nav-tab active" data-tab="control-tab">
+                <i class="fa-solid fa-gamepad"></i>
+                <span>Controls</span>
+            </button>
+            <button class="mobile-nav-tab" data-tab="screen-tab">
+                <i class="fa-solid fa-desktop"></i>
+                <span>Screen</span>
+            </button>
+            <button class="mobile-nav-tab" data-tab="media-tab">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Media</span>
+            </button>
+            <button class="mobile-nav-tab" data-tab="stats-tab">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>PC Stats</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- Scripts (with cache-busting version) -->
+    <script src="app.js?v=2"></script>
+</body>
+</html>
